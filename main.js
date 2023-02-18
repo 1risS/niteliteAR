@@ -12,6 +12,53 @@ button.addEventListener("click", () => {
   animate();
 })
 
+class AlphaVideoMaterial extends THREE.ShaderMaterial {
+  constructor() {
+    super();
+
+    this.video = document.getElementById('video');
+
+    this.videoTexture = new THREE.VideoTexture(this.video);
+    this.videoTexture.minFilter = THREE.LinearFilter;
+    this.videoTexture.magFilter = THREE.LinearFilter;
+
+    this.setValues({
+      uniforms: {
+        texture: {
+          type: "t",
+          value: this.videoTexture
+        }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+
+        void main(void) {
+          vUv = uv;
+          vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D texture;
+        varying vec2 vUv;
+
+        void main(void) {
+          vec3 tColor = texture2D( texture, vUv).rgb;
+          vec3 aColor = texture2D( texture, (vUv + vec2(0, -0.5))).rgb;
+          gl_FragColor = vec4(tColor, aColor[1]);
+        }
+      `,
+      transparent: true
+    });
+  }
+
+  update() {
+    if (this.video.readyState === this.video.HAVE_ENOUGH_DATA && this.videoTexture) {
+      this.videoTexture.needsUpdate = true;
+    }
+  }
+}
+
 function initialize() {
   scene = new THREE.Scene();
 
@@ -25,6 +72,7 @@ function initialize() {
     antialias: true,
     alpha: true
   });
+  renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setClearColor(new THREE.Color('lightgrey'), 0)
   renderer.setSize(640, 480);
   renderer.domElement.style.position = 'absolute'
@@ -87,16 +135,23 @@ function initialize() {
     type: 'pattern', patternUrl: "data/hiro.patt",
   })
 
-  let geometry1 = new THREE.PlaneBufferGeometry(2, 2, 4, 4);
+  // let geometry1 = new THREE.PlaneBufferGeometry(2, 2, 4, 4);
+  let geometry1 = new THREE.PlaneGeometry(5, 5);
 
-  let video = document.getElementById('video');
-  let texture = new THREE.VideoTexture(video);
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.format = THREE.RGBAFormat;
-  let material1 = new THREE.MeshBasicMaterial({ map: texture });
+  let uvs = geometry1.faceVertexUvs[0];
+  uvs[0][1].y = 0.5;
+  uvs[1][0].y = 0.5;
+  uvs[1][1].y = 0.5;
 
-  mesh1 = new THREE.Mesh(geometry1, material1);
+  // let video = document.getElementById('video');
+  // let texture = new THREE.VideoTexture(video);
+  // texture.minFilter = THREE.LinearFilter;
+  // texture.magFilter = THREE.LinearFilter;
+  // texture.format = THREE.RGBAFormat;
+  // let material1 = new THREE.MeshBasicMaterial({ map: texture });
+  let alphaVideoMaterial = new AlphaVideoMaterial();
+
+  mesh1 = new THREE.Mesh(geometry1, alphaVideoMaterial);
   mesh1.rotation.x = -Math.PI / 2;
 
   markerRoot1.add(mesh1);
