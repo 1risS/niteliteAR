@@ -3,8 +3,14 @@ var arToolkitSource, arToolkitContext;
 var markerRoot1;
 var mesh1;
 
-initialize();
-animate();
+const button = document.getElementById("start")
+button.addEventListener("click", () => {
+  const video = document.getElementById('video')
+  video.play();
+  console.log("playing")
+  initialize();
+  animate();
+})
 
 function initialize() {
   scene = new THREE.Scene();
