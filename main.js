@@ -203,7 +203,7 @@ async function shareCanvasAsImage(canvas, filename) {
   try {
     await navigator.share(shareData);
   } catch (err) {
-    console.error(err)
+    // console.error(err)
   }
 }
 
