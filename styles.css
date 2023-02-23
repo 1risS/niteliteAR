@@ -18,7 +18,7 @@ body {
   flex-direction: column;
   color: #fff;
   font-size: 1.25rem;
-  padding-top: 50%;
+  padding-top: 40vh;
 }
 
 #start {
@@ -34,7 +34,7 @@ body {
   position: fixed;
   width: 60%;
   left: 50%;
-  bottom: 20%;
+  top: 10%;
   color: #fff;
   padding: 1em 2em;
   border-radius: 30px;
