@@ -169,7 +169,7 @@ function listCameras() {
 }
 
 function onResize() {
-  arToolkitSource.onResize()
+  arToolkitSource.onResizeElement()
   arToolkitSource.copyElementSizeTo(renderer.domElement)
   if (arToolkitContext.arController !== null) {
     arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
@@ -184,6 +184,22 @@ function hideHelp() {
 function showHelp() {
   const helpDiv = document.getElementById("help");
   helpDiv.classList.remove("hidden");
+}
+
+async function shareCanvasAsImage(canvas, filename) {
+  const dataUrl = canvas.toDataURL('image/jpeg');
+  const blob = await (await fetch(dataUrl)).blob();
+  const filesArray = [
+    new File([blob], filename, { type: "image/jpeg", lastModified: new Date().getTime() })
+  ];
+  const shareData = {
+    files: filesArray,
+  };
+  try {
+    await navigator.share(shareData);
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 function downloadCanvasAsImage(canvas, filename) {
@@ -201,7 +217,7 @@ listCameras();
 
 const button = document.getElementById("start")
 button.addEventListener("click", () => {
-  document.getElementById("start-overlay").classList.add("hidden");
+  document.getElementById("start-overlay").style = 'display: none';
   document.getElementById("help").classList.remove("hidden");
   const video = document.getElementById('video')
   video.play();
@@ -221,14 +237,18 @@ changeButton.addEventListener("click", () => {
 
 const recordButton = document.getElementById("record-button");
 recordButton.addEventListener("click", async () => {
-  console.log("record")
   const hiddenCanvas = document.querySelector('canvas.hidden');
 
   const threejsCanvas = renderer.domElement;
   const arCanvas = arToolkitContext.arController.canvas;
 
-  const width = threejsCanvas.width;
-  const height = threejsCanvas.height;
+  renderer.render(scene, camera);
+
+  // downloadCanvasAsImage(arCanvas, "arCanvas.jpg")
+  // downloadCanvasAsImage(threejsCanvas, "threejsCanvas.jpg")
+
+  const width = arToolkitContext.arController.videoWidth;
+  const height = arToolkitContext.arController.videoHeight;
 
   if (width && height) {
     // Setup a canvas with the same dimensions as the video.
@@ -241,27 +261,12 @@ recordButton.addEventListener("click", async () => {
   ctx.drawImage(arCanvas, 0, 0, width, height);
   ctx.drawImage(threejsCanvas, 0, 0, width, height);
 
-
+  // Share image (if possible), otherwise download as file
   if (typeof navigator.share === "function") {
-    // Share image (if possible)
-    const dataUrl = hiddenCanvas.toDataURL('image/jpeg');
-    const blob = await (await fetch(dataUrl)).blob();
-    const filesArray = [
-      new File([blob], 'image.jpg', { type: "image/jpeg", lastModified: new Date().getTime() })
-    ];
-    const shareData = {
-      files: filesArray,
-    };
-    try {
-      await navigator.share(shareData);
-    } catch (err) {
-      console.error(err)
-    }
+    shareCanvasAsImage(hiddenCanvas, "nitelito.jpg");
   } else {
-    // Otherwise, download file
     downloadCanvasAsImage(hiddenCanvas, "nitelite.jpg")
   }
-
 });
 
 // handle resize event
