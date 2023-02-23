@@ -1,0 +1,66 @@
+body {
+  margin: 0px;
+  overflow: hidden;
+  font-family: Monospace;
+  background-color: #000;
+}
+
+#debug {
+  color: white;
+  overflow: auto;
+  height: 100vh;
+  width: 100vw;
+}
+#debug .error {
+  color: red;
+}
+
+canvas {
+  z-index: -1;
+}
+
+.hidden {
+  display: none;
+}
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                            supported by Chrome, Edge, Opera and Firefox */
+}
+
+#change-button {
+  display: flex;
+  align-items: center;
+  width: 56px;
+  height: 56px;
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  border-radius: 50%;
+  cursor: pointer;
+
+  outline: 0;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#change-button:hover {
+  background-color: #555;
+}
+
+#change-button.active {
+  background-color: red;
+}
+
+#change-button img {
+  display: block;
+  width: 50%;
+  margin: 0 auto;
+}

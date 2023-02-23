@@ -13,34 +13,7 @@
 	<script src="js/threex/threex-artoolkitcontext.js"></script>
 	<script src="js/threex/threex-arbasecontrols.js"></script>
 	<script src="js/threex/threex-armarkercontrols.js"></script>
-	<style>
-		body {
-			margin: 0px;
-			overflow: hidden;
-			font-family: Monospace;
-			background-color: #000;
-		}
-
-		#debug {
-			color: white;
-			overflow: auto;
-			height: 100vh;
-			width: 100vw;
-		}
-
-		#debug .error {
-			color: red;
-		}
-
-		canvas {
-			z-index: -1;
-		}
-
-		.hidden {
-			display: none;
-		}
-
-	</style>
+	<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -55,6 +28,10 @@
 
 	<select id="camera" class="hidden">
 	</select>
+
+	<div id="change-button">
+		<img src="img/change.svg" />
+	</div>
 
 	<div id="debug"></div>
 	<script type="module" src="main.js"></script>

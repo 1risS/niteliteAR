@@ -2,7 +2,7 @@ var scene, camera, renderer, clock, deltaTime, totalTime;
 var arToolkitSource, arToolkitContext;
 var markerRoot1;
 var mesh1;
-// 
+
 class AlphaVideoMaterial extends THREE.ShaderMaterial {
   constructor() {
     super();
@@ -160,15 +160,11 @@ function listCameras() {
     .then(() => navigator.mediaDevices.enumerateDevices())
     .then(devices => {
       const cameraSelect = document.getElementById("camera")
-
-      // const cameras = [];
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
         cameraSelect.options.add(new Option(device.label, device.deviceId));
       })
-
       // Show camera select now
-      cameraSelect.className = "";
-
+      // cameraSelect.className = "";
       // Set camera source
       setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
     })
@@ -193,14 +189,18 @@ button.addEventListener("click", () => {
   button.className = "hidden";
   const video = document.getElementById('video')
   video.play();
-  console.log("playing")
   animate();
 })
 
 const cameraSelect = document.getElementById("camera")
 cameraSelect.addEventListener("change", (e) => {
-  console.log("change camera:", e.target)
   setCameraSource(e.target.value)
+})
+
+const changeButton = document.getElementById("change-button")
+changeButton.addEventListener("click", () => {
+  cameraSelect.selectedIndex = (cameraSelect.selectedIndex + 1) % cameraSelect.options.length
+  setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
 })
 
 // handle resize event
