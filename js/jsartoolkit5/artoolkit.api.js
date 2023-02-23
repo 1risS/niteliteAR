@@ -48,7 +48,7 @@
 		this.canvas = document.createElement('canvas');
 		this.canvas.width = w;
 		this.canvas.height = h;
-		this.ctx = this.canvas.getContext('2d');
+		this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
 
 		this.videoWidth = w;
 		this.videoHeight = h;
