@@ -178,12 +178,12 @@ function onResize() {
 
 function hideHelp() {
   const helpDiv = document.getElementById("help");
-  helpDiv.className = "hidden";
+  helpDiv.classList.add("hidden");
 }
 
 function showHelp() {
   const helpDiv = document.getElementById("help");
-  helpDiv.className = "";
+  helpDiv.classList.remove("hidden");
 }
 
 function downloadCanvasAsImage(canvas, filename) {
@@ -201,8 +201,8 @@ listCameras();
 
 const button = document.getElementById("start")
 button.addEventListener("click", () => {
-  document.getElementById("start-overlay").className = "hidden";
-  document.getElementById("help").className = "";
+  document.getElementById("start-overlay").classList.add("hidden");
+  document.getElementById("help").classList.remove("hidden");
   const video = document.getElementById('video')
   video.play();
   animate();
