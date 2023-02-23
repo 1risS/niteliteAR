@@ -186,7 +186,7 @@ listCameras();
 
 const button = document.getElementById("start")
 button.addEventListener("click", () => {
-  button.className = "hidden";
+  document.getElementById("start-overlay").className = "hidden";
   const video = document.getElementById('video')
   video.play();
   animate();

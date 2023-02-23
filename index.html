@@ -20,18 +20,20 @@
 	<!-- <video id="video" autoplay loop crossOrigin="anonymous" webkit-playsinline style="display:none">
 		<source src="video/cartucho.webm" type="video/webm">
 	</video> -->
-	<button id="start">Start</button>
+	<div id="start-overlay" class="overlay">
+		<p>Hacé clic en el botón</p>
+		<button id="start">Comenzar</button>
+	</div>
+
+	<select id="camera" class="hidden"></select>
+	<div id="change-button">
+		<img src="img/change.svg" />
+	</div>
+
 	<video id="video" crossOrigin="anonymous" loop playsinline muted style="display: none">
 		<source src="video/nitelito.webm" type="video/webm">
 		<source src="video/nitelito.mp4" type="video/mp4">
 	</video>
-
-	<select id="camera" class="hidden">
-	</select>
-
-	<div id="change-button">
-		<img src="img/change.svg" />
-	</div>
 
 	<div id="debug"></div>
 	<script type="module" src="main.js"></script>
