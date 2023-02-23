@@ -100,6 +100,18 @@ function initialize() {
   let markerControls1 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
     type: 'pattern', patternUrl: "data/hiro.patt",
   })
+  let markerLostTimeout;
+  markerControls1.addEventListener("markerFound", () => {
+    clearTimeout(markerLostTimeout);
+    hideHelp();
+  });
+  markerControls1.addEventListener('markerLost', () => {
+    console.log("markerLost")
+    // clearTimeout(markerLostTimeout);
+    markerLostTimeout = setTimeout(() => {
+      showHelp();
+    }, 3000);
+  })
 
   // let geometry1 = new THREE.PlaneBufferGeometry(2, 2, 4, 4);
   let geometry1 = new THREE.PlaneGeometry(5, 5);
@@ -179,6 +191,16 @@ function onResize() {
   }
 }
 
+function hideHelp() {
+  const helpDiv = document.getElementById("help");
+  helpDiv.className = "hidden";
+}
+
+function showHelp() {
+  const helpDiv = document.getElementById("help");
+  helpDiv.className = "";
+}
+
 // UI
 
 initialize();
@@ -187,6 +209,7 @@ listCameras();
 const button = document.getElementById("start")
 button.addEventListener("click", () => {
   document.getElementById("start-overlay").className = "hidden";
+  document.getElementById("help").className = "";
   const video = document.getElementById('video')
   video.play();
   animate();
