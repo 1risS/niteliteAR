@@ -2,16 +2,7 @@ var scene, camera, renderer, clock, deltaTime, totalTime;
 var arToolkitSource, arToolkitContext;
 var markerRoot1;
 var mesh1;
-
-const button = document.getElementById("start")
-button.addEventListener("click", () => {
-  const video = document.getElementById('video')
-  video.play();
-  console.log("playing")
-  initialize();
-  animate();
-})
-
+// 
 class AlphaVideoMaterial extends THREE.ShaderMaterial {
   constructor() {
     super();
@@ -85,31 +76,6 @@ function initialize() {
   totalTime = 0;
 
   ////////////////////////////////////////////////////////////
-  // setup arToolkitSource
-  ////////////////////////////////////////////////////////////
-
-  arToolkitSource = new THREEx.ArToolkitSource({
-    sourceType: 'webcam',
-  });
-
-  function onResize() {
-    arToolkitSource.onResize()
-    arToolkitSource.copySizeTo(renderer.domElement)
-    if (arToolkitContext.arController !== null) {
-      arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)
-    }
-  }
-
-  arToolkitSource.init(function onReady() {
-    onResize()
-  });
-
-  // handle resize event
-  window.addEventListener('resize', function () {
-    onResize()
-  });
-
-  ////////////////////////////////////////////////////////////
   // setup arToolkitContext
   ////////////////////////////////////////////////////////////	
 
@@ -174,3 +140,77 @@ function animate() {
   update();
   render();
 }
+
+// Cameras
+
+function setCameraSource(deviceId) {
+  // if (arToolkitSource) arToolkitSource.dispose();
+  arToolkitSource = new THREEx.ArToolkitSource({
+    sourceType: 'webcam',
+    deviceId: deviceId
+  });
+
+  arToolkitSource.init(function onReady() {
+    onResize()
+  });
+}
+
+function listCameras() {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(() => navigator.mediaDevices.enumerateDevices())
+    .then(devices => {
+      const cameraSelect = document.getElementById("camera")
+
+      // const cameras = [];
+      devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
+        cameraSelect.options.add(new Option(device.label, device.deviceId));
+      })
+
+      // Show camera select now
+      cameraSelect.className = "";
+
+      // Set camera source
+      setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
+    })
+    .catch(e => console.error(e));
+}
+
+function onResize() {
+  arToolkitSource.onResize()
+  arToolkitSource.copyElementSizeTo(renderer.domElement)
+  if (arToolkitContext.arController !== null) {
+    arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+  }
+}
+
+// UI
+
+initialize();
+listCameras();
+
+const button = document.getElementById("start")
+button.addEventListener("click", () => {
+  button.className = "hidden";
+  const video = document.getElementById('video')
+  video.play();
+  console.log("playing")
+  animate();
+})
+
+const cameraSelect = document.getElementById("camera")
+cameraSelect.addEventListener("change", (e) => {
+  console.log("change camera:", e.target)
+  setCameraSource(e.target.value)
+})
+
+// handle resize event
+window.addEventListener('resize', function () {
+  onResize()
+});
+
+
+const debugDiv = document.getElementById("debug");
+const console = {
+  log: msg => debugDiv.innerHTML += `<pre>${msg}${'\n'}</pre>`,
+  error: msg => debugDiv.innerHTML += `<pre class="error">${msg}${'\n'}</pre>`
+};
