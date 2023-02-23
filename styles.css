@@ -72,7 +72,7 @@ canvas {
                             supported by Chrome, Edge, Opera and Firefox */
 }
 
-#change-button {
+.button {
   display: flex;
   align-items: center;
   width: 56px;
@@ -84,23 +84,24 @@ canvas {
   background-color: #333;
   border-radius: 50%;
   cursor: pointer;
-
   outline: 0;
   -webkit-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
-
-#change-button:hover {
+.button:hover {
   background-color: #555;
 }
-
-#change-button.active {
-  background-color: red;
-}
-
-#change-button img {
+.button img {
   display: block;
   width: 50%;
   margin: 0 auto;
+}
+
+#change-button {
+  left: 75%;
+}
+#record-button {
+  width: 72px;
+  height: 72px;
 }
