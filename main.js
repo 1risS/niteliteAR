@@ -2,6 +2,7 @@ var scene, camera, renderer, clock, deltaTime, totalTime;
 var arToolkitSource, arToolkitContext;
 var markerRoot1;
 var mesh1;
+// var capabilitiesByDeviceId = {}
 
 class AlphaVideoMaterial extends THREE.ShaderMaterial {
   constructor() {
@@ -142,9 +143,12 @@ function animate() {
 // Cameras
 
 function setCameraSource(deviceId) {
+  // const capabilities = capabilitiesByDeviceId[deviceId];
+  // console.clear();
+  // console.log(`capabilities: ${JSON.stringify(capabilities, null, 2)}`)
   arToolkitSource = new THREEx.ArToolkitSource({
     sourceType: 'webcam',
-    deviceId: deviceId
+    deviceId: deviceId,
   });
 
   arToolkitSource.init(function onReady() {
@@ -159,6 +163,7 @@ function listCameras() {
       const cameraSelect = document.getElementById("camera")
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
         cameraSelect.options.add(new Option(device.label, device.deviceId));
+        // capabilitiesByDeviceId[device.deviceId] = device.getCapabilities()
       })
       if (cameraSelect.options.length <= 1) {
         document.getElementById("change-button").classList.add("hidden");
@@ -274,8 +279,9 @@ window.addEventListener('resize', function () {
   onResize()
 });
 
-// const debugDiv = document.getElementById("debug");
-// const console = {
-//   log: msg => debugDiv.innerHTML += `<pre>${msg}${'\n'}</pre>`,
-//   error: msg => debugDiv.innerHTML += `<pre class="error">${msg}${'\n'}</pre>`
-// };
+const debugDiv = document.getElementById("debug");
+const console = {
+  log: msg => debugDiv.innerHTML += `<pre>${msg}${'\n'}</pre>`,
+  error: msg => debugDiv.innerHTML += `<pre class="error">${msg}${'\n'}</pre>`,
+  clear: () => debugDiv.innerHTML = ""
+};
