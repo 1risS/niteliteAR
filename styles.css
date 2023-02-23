@@ -50,6 +50,11 @@ body {
   overflow: auto;
   height: 100vh;
   width: 100vw;
+  z-index: 110;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
 #debug .error {
   color: red;

@@ -100,33 +100,19 @@ function initialize() {
   let markerControls1 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
     type: 'pattern', patternUrl: "data/hiro.patt",
   })
-  let markerLostTimeout;
   markerControls1.addEventListener("markerFound", () => {
-    clearTimeout(markerLostTimeout);
     hideHelp();
   });
-  markerControls1.addEventListener('markerLost', () => {
-    console.log("markerLost")
-    // clearTimeout(markerLostTimeout);
-    markerLostTimeout = setTimeout(() => {
-      showHelp();
-    }, 3000);
-  })
 
   // let geometry1 = new THREE.PlaneBufferGeometry(2, 2, 4, 4);
-  let geometry1 = new THREE.PlaneGeometry(5, 5);
+  let geometry1 = new THREE.PlaneGeometry(5, 3);
+  geometry1.scale(1.5, 1.5, 1.5);
 
   let uvs = geometry1.faceVertexUvs[0];
   uvs[0][1].y = 0.5;
   uvs[1][0].y = 0.5;
   uvs[1][1].y = 0.5;
 
-  // let video = document.getElementById('video');
-  // let texture = new THREE.VideoTexture(video);
-  // texture.minFilter = THREE.LinearFilter;
-  // texture.magFilter = THREE.LinearFilter;
-  // texture.format = THREE.RGBAFormat;
-  // let material1 = new THREE.MeshBasicMaterial({ map: texture });
   let alphaVideoMaterial = new AlphaVideoMaterial();
 
   mesh1 = new THREE.Mesh(geometry1, alphaVideoMaterial);
@@ -156,7 +142,6 @@ function animate() {
 // Cameras
 
 function setCameraSource(deviceId) {
-  // if (arToolkitSource) arToolkitSource.dispose();
   arToolkitSource = new THREEx.ArToolkitSource({
     sourceType: 'webcam',
     deviceId: deviceId
@@ -175,9 +160,6 @@ function listCameras() {
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
         cameraSelect.options.add(new Option(device.label, device.deviceId));
       })
-      // Show camera select now
-      // cameraSelect.className = "";
-      // Set camera source
       setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
     })
     .catch(e => console.error(e));
@@ -199,6 +181,14 @@ function hideHelp() {
 function showHelp() {
   const helpDiv = document.getElementById("help");
   helpDiv.className = "";
+}
+
+function downloadCanvasAsImage(canvas, filename) {
+  let a = document.createElement("a");
+  a.href = canvas.toDataURL();
+  a.download = filename;
+  a.dispatchEvent(new MouseEvent("click"));
+  a.remove();
 }
 
 // UI
@@ -226,14 +216,58 @@ changeButton.addEventListener("click", () => {
   setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
 })
 
+const recordButton = document.getElementById("record-button");
+recordButton.addEventListener("click", async () => {
+  console.log("record")
+  const hiddenCanvas = document.querySelector('canvas.hidden');
+
+  const threejsCanvas = renderer.domElement;
+  const arCanvas = arToolkitContext.arController.canvas;
+
+  const width = threejsCanvas.width;
+  const height = threejsCanvas.height;
+
+  if (width && height) {
+    // Setup a canvas with the same dimensions as the video.
+    hiddenCanvas.width = width;
+    hiddenCanvas.height = height;
+  }
+
+  // Copy AR and Threejs canvas onto hidden canvas
+  const ctx = hiddenCanvas.getContext('2d');
+  ctx.drawImage(arCanvas, 0, 0, width, height);
+  ctx.drawImage(threejsCanvas, 0, 0, width, height);
+
+
+  if (typeof navigator.share === "function") {
+    // Share image (if possible)
+    const dataUrl = hiddenCanvas.toDataURL('image/jpeg');
+    const blob = await (await fetch(dataUrl)).blob();
+    const filesArray = [
+      new File([blob], 'image.jpg', { type: "image/jpeg", lastModified: new Date().getTime() })
+    ];
+    const shareData = {
+      files: filesArray,
+    };
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      console.error(err)
+    }
+  } else {
+    // Otherwise, download file
+    downloadCanvasAsImage(hiddenCanvas, "nitelite.jpg")
+  }
+
+});
+
 // handle resize event
 window.addEventListener('resize', function () {
   onResize()
 });
 
-
-const debugDiv = document.getElementById("debug");
-const console = {
-  log: msg => debugDiv.innerHTML += `<pre>${msg}${'\n'}</pre>`,
-  error: msg => debugDiv.innerHTML += `<pre class="error">${msg}${'\n'}</pre>`
-};
+// const debugDiv = document.getElementById("debug");
+// const console = {
+//   log: msg => debugDiv.innerHTML += `<pre>${msg}${'\n'}</pre>`,
+//   error: msg => debugDiv.innerHTML += `<pre class="error">${msg}${'\n'}</pre>`
+// };
