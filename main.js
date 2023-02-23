@@ -160,6 +160,9 @@ function listCameras() {
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
         cameraSelect.options.add(new Option(device.label, device.deviceId));
       })
+      if (cameraSelect.options.length <= 1) {
+        document.getElementById("change-button").classList.add("hidden");
+      }
       setCameraSource(cameraSelect.options[cameraSelect.selectedIndex].value)
     })
     .catch(e => console.error(e));
