@@ -2,7 +2,11 @@ var scene, camera, renderer, clock, deltaTime, totalTime;
 var arToolkitSource, arToolkitContext;
 var markerRoot1;
 var mesh1;
+var videoChunks = [];
+var mediaRecorder;
 // var capabilitiesByDeviceId = {}
+
+const RECORD_START_TIME = 500;
 
 class AlphaVideoMaterial extends THREE.ShaderMaterial {
   constructor() {
@@ -191,11 +195,88 @@ function showHelp() {
   helpDiv.classList.remove("hidden");
 }
 
-async function shareCanvasAsImage(canvas, filename) {
-  const dataUrl = canvas.toDataURL('image/jpeg');
+function recordImage() {
+  const hiddenCanvas = document.querySelector('canvas.hidden');
+
+  const threejsCanvas = renderer.domElement;
+  const arCanvas = arToolkitContext.arController.canvas;
+
+  renderer.render(scene, camera);
+
+  const width = arToolkitContext.arController.videoWidth;
+  const height = arToolkitContext.arController.videoHeight;
+
+  // TODO: If on portrait, recalculate widhtRecalculate wiodth height to remove
+  // black borders if on portrait.
+
+  if (width && height) {
+    // Setup a canvas with the same dimensions as the video.
+    hiddenCanvas.width = width;
+    hiddenCanvas.height = height;
+  }
+
+  // Copy AR and Threejs canvas onto hidden canvas
+  const ctx = hiddenCanvas.getContext('2d');
+  ctx.drawImage(arCanvas, 0, 0, width, height);
+  ctx.drawImage(threejsCanvas, 0, 0, width, height);
+
+  const mimetype = 'image/jpeg'
+  const dataUrl = hiddenCanvas.toDataURL(mimetype);
+
+  // Share image (if possible), otherwise download as file
+  if (typeof navigator.share === "function") {
+    shareCanvas(dataUrl, "nitelito.jpg", mimetype);
+  } else {
+    downloadCanvas(dataUrl, "nitelite.jpg")
+  }
+}
+
+function startRecordingVideo() {
+  // FIXME: How can we record both canvases??
+  const canvas = arToolkitContext.arController.canvas;
+  const canvasStream = canvas.captureStream(60); // fps
+
+  // Create media recorder from canvas stream
+  mediaRecorder = new MediaRecorder(canvasStream, {
+    // mimeType: "video/webm; codecs=vp9"
+    videoBitsPerSecond: 2500000,
+    mimeType: "video/webm",
+  });
+  // Record data in chunks array when data is available
+  mediaRecorder.ondataavailable = (evt) => { videoChunks.push(evt.data); };
+  // Provide recorded data when recording stops
+  mediaRecorder.onstop = recordVideo;
+  // Start recording using a 1s timeslice [ie data is made available every 1s)
+  mediaRecorder.start(1000);
+}
+
+function endRecordingVideo() {
+  setTimeout(() => {
+    mediaRecorder.stop();
+  }, 500);
+}
+
+function cancelRecordingVideo() {
+
+}
+
+function recordVideo() {
+  const mimetype = "video/webm";
+  const blob = new Blob(videoChunks, { type: mimetype });
+  const dataUrl = URL.createObjectURL(blob);
+
+  // Share image (if possible), otherwise download as file
+  if (typeof navigator.share === "function") {
+    shareCanvas(dataUrl, "nitelito.webm", mimetype);
+  } else {
+    downloadCanvas(dataUrl, "nitelite.webm")
+  }
+}
+
+async function shareCanvas(dataUrl, filename, mimetype) {
   const blob = await (await fetch(dataUrl)).blob();
   const filesArray = [
-    new File([blob], filename, { type: "image/jpeg", lastModified: new Date().getTime() })
+    new File([blob], filename, { type: mimetype, lastModified: new Date().getTime() })
   ];
   const shareData = {
     files: filesArray,
@@ -207,9 +288,9 @@ async function shareCanvasAsImage(canvas, filename) {
   }
 }
 
-function downloadCanvasAsImage(canvas, filename) {
+function downloadCanvas(dataUrl, filename) {
   let a = document.createElement("a");
-  a.href = canvas.toDataURL();
+  a.href = dataUrl
   a.download = filename;
   a.dispatchEvent(new MouseEvent("click"));
   a.remove();
@@ -241,38 +322,44 @@ changeButton.addEventListener("click", () => {
 })
 
 const recordButton = document.getElementById("record-button");
-recordButton.addEventListener("click", async () => {
-  const hiddenCanvas = document.querySelector('canvas.hidden');
+let startsAt, endsAt, recordingTimeout;
 
-  const threejsCanvas = renderer.domElement;
-  const arCanvas = arToolkitContext.arController.canvas;
+const buttonDownHandler = () => {
+  startsAt = new Date()
+  clearTimeout(recordingTimeout);
+  recordingTimeout = setTimeout(() => {
+    recordButton.classList.add("recording")
+    startRecordingVideo()
+  }, RECORD_START_TIME)
+};
 
-  renderer.render(scene, camera);
+const buttonCancelHandler = () => {
+  clearTimeout(recordingTimeout);
+  recordButton.classList.remove("recording");
+};
 
-  // downloadCanvasAsImage(arCanvas, "arCanvas.jpg")
-  // downloadCanvasAsImage(threejsCanvas, "threejsCanvas.jpg")
+const buttonUpHandler = async () => {
+  endsAt = new Date()
+  // console.log(`diff ${endsAt - startsAt}`);
 
-  const width = arToolkitContext.arController.videoWidth;
-  const height = arToolkitContext.arController.videoHeight;
+  clearTimeout(recordingTimeout);
+  recordButton.classList.remove("recording");
 
-  if (width && height) {
-    // Setup a canvas with the same dimensions as the video.
-    hiddenCanvas.width = width;
-    hiddenCanvas.height = height;
-  }
-
-  // Copy AR and Threejs canvas onto hidden canvas
-  const ctx = hiddenCanvas.getContext('2d');
-  ctx.drawImage(arCanvas, 0, 0, width, height);
-  ctx.drawImage(threejsCanvas, 0, 0, width, height);
-
-  // Share image (if possible), otherwise download as file
-  if (typeof navigator.share === "function") {
-    shareCanvasAsImage(hiddenCanvas, "nitelito.jpg");
+  if (endsAt - startsAt >= RECORD_START_TIME) {
+    endRecordingVideo();
   } else {
-    downloadCanvasAsImage(hiddenCanvas, "nitelite.jpg")
+    cancelRecordingVideo();
+    recordImage();
   }
-});
+};
+
+recordButton.addEventListener("mousedown", buttonDownHandler);
+recordButton.addEventListener("mouseout", buttonCancelHandler);
+recordButton.addEventListener("mouseup", buttonUpHandler);
+
+recordButton.addEventListener("touchstart", buttonDownHandler);
+recordButton.addEventListener("touchcancel", buttonCancelHandler);
+recordButton.addEventListener("touchend", buttonUpHandler);
 
 // handle resize event
 window.addEventListener('resize', function () {
