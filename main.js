@@ -4,7 +4,8 @@ var markerRoot1;
 var mesh1;
 var videoChunks = [];
 var mediaRecorder;
-// var capabilitiesByDeviceId = {}
+var capabilitiesByDeviceId = {};
+var noFlip = false;
 
 const RECORD_START_TIME = 500;
 
@@ -71,6 +72,7 @@ function initialize() {
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setClearColor(new THREE.Color('lightgrey'), 0)
   renderer.setSize(640, 480);
+  renderer.domElement.style.display = 'none'
   renderer.domElement.style.position = 'absolute'
   renderer.domElement.style.top = '0px'
   renderer.domElement.style.left = '0px'
@@ -129,12 +131,42 @@ function initialize() {
 
 function update() {
   // update artoolkit on every frame
-  if (arToolkitSource.ready !== false)
+  if (arToolkitSource && arToolkitSource.ready !== false)
     arToolkitContext.update(arToolkitSource.domElement);
 }
 
 function render() {
+  const mainCanvas = document.getElementById("main-canvas");
+
+  const width = arToolkitContext.arController.videoWidth;
+  const height = arToolkitContext.arController.videoHeight;
+
+  // TODO: If on portrait, recalculate widhtRecalculate wiodth height to remove
+  // black borders if on portrait.
+
+  if (width && height) {
+    // Setup a canvas with the same dimensions as the video.
+    mainCanvas.width = width;
+    mainCanvas.height = height;
+  }
+
   renderer.render(scene, camera);
+
+  // Copy AR and Threejs canvas onto main canvas
+  const ctx = mainCanvas.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
+  if (noFlip) {
+    ctx.drawImage(arToolkitContext.arController.canvas, 0, 0, width, height);
+    ctx.drawImage(renderer.domElement, 0, 0, width, height);
+  } else {
+    // horizontal-flip
+    ctx.scale(-1, 1);
+    ctx.translate(-width, 0);
+    ctx.drawImage(arToolkitContext.arController.canvas, 0, 0, width, height);
+    ctx.drawImage(renderer.domElement, 0, 0, width, height);
+    // reset the transform-matrix
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
 }
 
 function animate() {
@@ -149,14 +181,20 @@ function animate() {
 
 function setCameraSource(deviceId) {
   // const capabilities = capabilitiesByDeviceId[deviceId];
-  // console.clear();
-  // console.log(`capabilities: ${JSON.stringify(capabilities, null, 2)}`)
+
   arToolkitSource = new THREEx.ArToolkitSource({
     sourceType: 'webcam',
     deviceId: deviceId,
   });
 
   arToolkitSource.init(function onReady() {
+    arToolkitSource.domElement.style.display = 'none';
+
+    const capabilities = capabilitiesByDeviceId[deviceId];
+    // console.clear();
+    // console.log(JSON.stringify(capabilities, null, 2));
+    noFlip = capabilities.facingMode.includes("environment");
+
     onResize()
   });
 }
@@ -168,7 +206,7 @@ function listCameras() {
       const cameraSelect = document.getElementById("camera")
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
         cameraSelect.options.add(new Option(device.label, device.deviceId));
-        // capabilitiesByDeviceId[device.deviceId] = device.getCapabilities()
+        capabilitiesByDeviceId[device.deviceId] = device.getCapabilities()
       })
       if (cameraSelect.options.length <= 1) {
         document.getElementById("change-button").classList.add("hidden");
@@ -179,10 +217,12 @@ function listCameras() {
 }
 
 function onResize() {
+  const mainCanvas = document.getElementById("main-canvas");
   arToolkitSource.onResizeElement()
   arToolkitSource.copyElementSizeTo(renderer.domElement)
   if (arToolkitContext.arController !== null) {
     arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+    arToolkitSource.copyElementSizeTo(mainCanvas)
   }
 }
 
@@ -197,32 +237,9 @@ function showHelp() {
 }
 
 function recordImage() {
-  const hiddenCanvas = document.querySelector('canvas.hidden');
-
-  const threejsCanvas = renderer.domElement;
-  const arCanvas = arToolkitContext.arController.canvas;
-
-  renderer.render(scene, camera);
-
-  const width = arToolkitContext.arController.videoWidth;
-  const height = arToolkitContext.arController.videoHeight;
-
-  // TODO: If on portrait, recalculate widhtRecalculate wiodth height to remove
-  // black borders if on portrait.
-
-  if (width && height) {
-    // Setup a canvas with the same dimensions as the video.
-    hiddenCanvas.width = width;
-    hiddenCanvas.height = height;
-  }
-
-  // Copy AR and Threejs canvas onto hidden canvas
-  const ctx = hiddenCanvas.getContext('2d');
-  ctx.drawImage(arCanvas, 0, 0, width, height);
-  ctx.drawImage(threejsCanvas, 0, 0, width, height);
-
+  const mainCanvas = document.getElementById('main-canvas');
   const mimetype = 'image/jpeg'
-  const dataUrl = hiddenCanvas.toDataURL(mimetype);
+  const dataUrl = mainCanvas.toDataURL(mimetype);
 
   // Share image (if possible), otherwise download as file
   if (typeof navigator.share === "function") {
@@ -233,9 +250,8 @@ function recordImage() {
 }
 
 function startRecordingVideo() {
-  // FIXME: How can we record both canvases??
-  const canvas = arToolkitContext.arController.canvas;
-  const canvasStream = canvas.captureStream(60); // fps
+  const mainCanvas = document.getElementById('main-canvas');
+  const canvasStream = mainCanvas.captureStream(60); // fps
 
   // Create media recorder from canvas stream
   mediaRecorder = new MediaRecorder(canvasStream, {

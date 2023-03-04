@@ -123,3 +123,9 @@ canvas {
 #record-button.recording {
   background-color: red;
 }
+
+#main-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
