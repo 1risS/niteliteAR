@@ -9,10 +9,10 @@ var mediaRecorder;
 const RECORD_START_TIME = 500;
 
 class AlphaVideoMaterial extends THREE.ShaderMaterial {
-  constructor() {
+  constructor(videoElement) {
     super();
 
-    this.video = document.getElementById('video');
+    this.video = videoElement;
 
     this.videoTexture = new THREE.VideoTexture(this.video);
     this.videoTexture.minFilter = THREE.LinearFilter;
@@ -118,7 +118,8 @@ function initialize() {
   uvs[1][0].y = 0.5;
   uvs[1][1].y = 0.5;
 
-  let alphaVideoMaterial = new AlphaVideoMaterial();
+  const animationVideo = document.getElementById('animation')
+  const alphaVideoMaterial = new AlphaVideoMaterial(animationVideo);
 
   mesh1 = new THREE.Mesh(geometry1, alphaVideoMaterial);
   mesh1.rotation.x = -Math.PI / 2;
@@ -305,8 +306,8 @@ const button = document.getElementById("start")
 button.addEventListener("click", () => {
   document.getElementById("start-overlay").style = 'display: none';
   document.getElementById("help").classList.remove("hidden");
-  const video = document.getElementById('video')
-  video.play();
+  const animationVideo = document.getElementById('animation')
+  animationVideo.play();
   animate();
 })
 
