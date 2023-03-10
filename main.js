@@ -1,7 +1,7 @@
 var scene, camera, renderer, clock, deltaTime, totalTime;
 var arToolkitSource, arToolkitContext;
-var markerRoot1;
-var mesh1;
+var markerRoot1, markerRoot2;
+var mesh1, mesh2;
 var videoChunks = [];
 var mediaRecorder;
 var capabilitiesByDeviceId = {};
@@ -120,13 +120,42 @@ function initialize() {
   uvs[1][0].y = 0.5;
   uvs[1][1].y = 0.5;
 
-  const animationVideo = document.getElementById('animation')
+  const animationVideo = document.getElementById('nitelito')
   const alphaVideoMaterial = new AlphaVideoMaterial(animationVideo);
 
   mesh1 = new THREE.Mesh(geometry1, alphaVideoMaterial);
   mesh1.rotation.x = -Math.PI / 2;
 
   markerRoot1.add(mesh1);
+
+  /// nitelito2 
+
+  // build markerControls
+  markerRoot2 = new THREE.Group();
+  scene.add(markerRoot2);
+  let markerControls2 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot2, {
+    type: 'pattern', patternUrl: "data/kanji.patt",
+  })
+  markerControls2.addEventListener("markerFound", () => {
+    hideHelp();
+  });
+
+  // let geometry1 = new THREE.PlaneBufferGeometry(2, 2, 4, 4);
+  let geometry2 = new THREE.PlaneGeometry(5, 3);
+  geometry2.scale(1.5, 1.5, 1.5);
+
+  let uvs2 = geometry2.faceVertexUvs[0];
+  uvs2[0][1].y = 0.5;
+  uvs2[1][0].y = 0.5;
+  uvs2[1][1].y = 0.5;
+
+  const animationVideo2 = document.getElementById('nitelito2')
+  const alphaVideoMaterial2 = new AlphaVideoMaterial(animationVideo2);
+
+  mesh2 = new THREE.Mesh(geometry2, alphaVideoMaterial2);
+  mesh2.rotation.x = -Math.PI / 2;
+
+  markerRoot2.add(mesh2);
 }
 
 function update() {
@@ -322,8 +351,8 @@ const button = document.getElementById("start")
 button.addEventListener("click", () => {
   document.getElementById("start-overlay").style = 'display: none';
   document.getElementById("help").classList.remove("hidden");
-  const animationVideo = document.getElementById('animation')
-  animationVideo.play();
+  document.getElementById('nitelito').play();
+  document.getElementById('nitelito2').play();
   animate();
 })
 
