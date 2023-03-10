@@ -234,8 +234,14 @@ function listCameras() {
     .then(devices => {
       const cameraSelect = document.getElementById("camera")
       devices.filter(device => device.kind === "videoinput").forEach((device, n) => {
+        // console.log(JSON.stringify(device, null, 2))
         cameraSelect.options.add(new Option(device.label, device.deviceId));
-        capabilitiesByDeviceId[device.deviceId] = device.getCapabilities()
+        try {
+          capabilitiesByDeviceId[device.deviceId] = device.getCapabilities()
+        } catch (err) {
+          // console.error(err)
+          capabilitiesByDeviceId[device.deviceId] = { facingMode: ["environment"] }
+        }
       })
       if (cameraSelect.options.length <= 1) {
         document.getElementById("change-button").classList.add("hidden");
